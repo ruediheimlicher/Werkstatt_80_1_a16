@@ -1,0 +1,13 @@
+build/*
+*.eep
+*.elf
+*.lss
+*.lst
+*.map
+*.sym
+*.xcodeproj
+*.hex
+*.o
+.dep/
+Source/*
+mag*
