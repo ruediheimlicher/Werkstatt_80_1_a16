@@ -140,6 +140,8 @@ void Init_SPI_Master(void)
    SPI_CONTROL_PORT |=(1<<SPI_CONTROL_SCK);  // SCK HI
    SPI_CONTROL_PORT |=(1<<SPI_CONTROL_CS_HC); // CS HI
    
+   SPI_CONTROL_PORT |=(1<<SPI_CONTROL_MOSI); // MOSI HI
+   
    SPI_CONTROL_DDR &= ~(1<<SPI_CONTROL_MISO);																// MISO Eingang
    SPI_CONTROL_PORT |=(1<<SPI_CONTROL_MISO);																	// HI
    

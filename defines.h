@@ -27,7 +27,7 @@
 #define SDAPIN		0 // PORT C
 #define SCLPIN		1
 
-//#define TWI_WAIT_BIT		3
+//#define TWI_WAIT_BIT		2
 #define TWI_OK_BIT         4
 #define WDTBIT             7
 
@@ -132,30 +132,38 @@
 #define SLAVE_OUT_DDR          DDRC		// DDR fuer Slave
 #define SLAVE_OUT_PIN          PINC  // PIN fuer Slave
 
-#define BUZZER_PORT         PORTA		// Ausgangsport fuer Slave
-#define BUZZER_DDR          DDRA		// DDR fuer Slave
-#define BUZZER_PIN         6
+#define BUZZER_PORT           PORTA		// Ausgangsport fuer Slave
+#define BUZZER_DDR            DDRA		// DDR fuer Slave
+#define BUZZER_PIN            6
 
 #define ALARM_IN_PORT         PORTB		// Eingang fuer Slave
 #define ALARM_IN_DDR          DDRB		// DDR fuer Slave
 #define ALARM_IN_PIN          PINB  // PIN fuer Slave
 
-#define EINGANG0BIT			2	// PIN 2 von PORT B als Eingang
-#define TIEFKUEHLALARM_PIN	4	// PIN  als Eingang fuer TiefkuehlAlarn
-#define WASSERALARM_PIN		5	//  als Eingang fuer Wasseralarm
+#define EINGANG0BIT           2	// PIN 2 von PORT B als Eingang
+#define TIEFKUEHLALARM_PIN    4	// PIN  als Eingang fuer TiefkuehlAlarn
+#define WASSERALARM_PIN       5	//  als Eingang fuer Wasseralarm
 
 
-#define ALARMBIT		6	// Bit 7 von Status
-#define MANUELLBIT		7	// Bit 7 von Status
+#define FIRSTRUN_PORT         PORTA
+#define FIRSTRUN_DDR          DDRA
 
-#define MANUELL_PIN		7	// Bit 7 von Status
+#define FIRSTRUN_BIT          6
+#define FIRSTRUN_PIN          6
+#define RX_BIT                5
+#define SPI_OK_BIT            4
+#define FIRSTRUNDELAY         0x02
+
+
+#define ALARM_BIT          6	// Bit 6 von Status
+#define MANUELL_BIT        7	// Bit 7 von Status
+
 
 
 #define LOOPLEDDDR		DDRD
 #define LOOPLEDPORT		PORTD
 #define LOOPLED			7
 
-#define STARTDELAYBIT	0
 #define HICOUNTBIT		1
 
 

@@ -31,7 +31,6 @@
 //									*
 //***********************************
 
-#define STARTDELAYBIT	0
 #define HICOUNTBIT		1
 
 
@@ -44,6 +43,7 @@ volatile uint8_t txbuffer[buffer_size];
 
 static volatile uint8_t SlaveStatus=0x00; //status
 
+volatile uint8_t spislavestatus=0x00; //status
 
 void delay_ms(unsigned int ms);
 //uint16_t                EEMEM Brennerlaufzeit;	// Akkumulierte Laufzeit
@@ -72,6 +72,9 @@ uint16_t                 Servoposition[]={1000,1250,1500,1750,2000,1750,1500,125
 
 volatile uint16_t       ADCImpuls=0;
 volatile uint8_t       adccounter=0;
+
+volatile uint16_t       firstruncounter=0;
+
 
 volatile uint16_t spannungA=0;
 volatile uint16_t spannungB=0;
@@ -248,11 +251,11 @@ void slaveinit(void)
    
    LOOPLEDDDR |= (1<<LOOPLED);
 
-   //TIEFKUEHLALARMBIT
+   //TIEFKUEHLALARM_BIT
    SLAVE_IN_DDR &= ~(1<<TIEFKUEHLALARM_PIN);	//Pin 3 von PORT B als Eingang fŸr Tiefkuehlalarm
    SLAVE_IN_PORT |= (1<<TIEFKUEHLALARM_PIN);	//Pull-up
    
-   //WASSERALARMBIT
+   //WASSERALARM_BIT
    
    SLAVE_IN_DDR &= ~(1<<WASSERALARM_PIN);	//Pin 4 von PORT B als Eingang fŸr Wasseralarm
    SLAVE_IN_PORT |= (1<<WASSERALARM_PIN);	//Pull-up
@@ -273,6 +276,10 @@ void slaveinit(void)
    
    BUZZER_DDR |= (1<<BUZZER_PIN);
    
+   //Ausgang fuer Firstrun
+   FIRSTRUN_DDR |= (1<<FIRSTRUN_PIN);
+   FIRSTRUN_PORT &= ~(1<<FIRSTRUN_PIN); // LO, NPN OFF
+   
    
    SlaveStatus=0;
    SlaveStatus |= (1<<TWI_WAIT_BIT);
@@ -291,17 +298,6 @@ void timer0(void)
     TCCR0 |= (1<<CS00);
     TCNT0 = 0x00;					//RŸcksetzen des Timers
     OCR0 = 0x8F;
-   
-   /*
-   TIMSK |= (1<<TOIE0);
-   TIMSK |= (1<<OCIE0);
-   
-   TCCR0 |= (1<<CS02);
-   TCCR0 |= (1<<CS00);
-   TCNT0 = 0x00;					//RŸcksetzen des Timers
-   OCR0 = 0x8F;
-*/
-   
 }
 
 ISR(TIMER0_COMP_vect)
@@ -329,7 +325,7 @@ ISR(TIMER0_OVF_vect)
       if (timer0counter1 >= 0xAFFF)
       {
          //OSZITOGG;
-         //timer0counter1;
+         timer0counter1=0;
          //SlaveStatus |= (1<<TWI_OK_BIT);
       }
    }
@@ -402,7 +398,7 @@ void timer2 (void)
 
 ISR(TIMER2_COMP_vect)
 {
-   if (SlaveStatus & (1<<ALARMBIT))
+   if (SlaveStatus & (1<<ALARM_BIT))
    {
       alarmcounter++;
       if ((alarmcounter > 0x0FFF) &&  (alarmcounter < 0x1FFF))// Ton ON
@@ -581,7 +577,7 @@ void main (void)
    }
 
    
-  Init_SPI_Master();
+//  Init_SPI_Master();
    
    /*
 #pragma mark DS1820 init
@@ -664,9 +660,9 @@ void main (void)
       loopcount0++;
       if (loopcount0==0xAFFF)
       {
-         //OSZITOGG;
-       //  lcd_gotoxy(12,1);
-       //  lcd_putint(loopcount1);
+         //  OSZITOGG;
+         //  lcd_gotoxy(12,1);
+         //  lcd_putint(loopcount1);
 
          loopcount0=0;
          LOOPLEDPORT ^=(1<<LOOPLED);
@@ -679,65 +675,91 @@ void main (void)
             OCR1A = Servoposition[Servostellung %8];
             if (TEST || (!(TESTPIN & (1<<TEST_PIN))))
             {
-              // rxdata=1;
                SlaveStatus |= (1<<TWI_OK_BIT); // TWI ist ON, Simulation Startroutine
-               
-               
             }
             spannungA = (readKanal(ADC_A_PIN));
             spannungB = (readKanal(ADC_B_PIN));
             
             adccounter++;
-
-
+            
+            // Firstrun: Warten mit Einschalten von SPI_Slave
+            
+            if (!(spislavestatus & (1<<FIRSTRUN_BIT)))
+            {
+               //lcd_gotoxy(14,1);
+               //lcd_putint2(firstruncounter);
+               
+               firstruncounter++;
+               if (firstruncounter > FIRSTRUNDELAY)
+               {
+                  spislavestatus |= (1<<FIRSTRUN_BIT);
+                  
+                  
+               }
+            }
          }
        }
-   //   continue;
-            /**	Beginn Startroutinen	***********************/
+
+      /** Beginn Startroutinen	***********************/
       // wenn Startbedingung vom Master:  TWI_slave initiieren
       if (SlaveStatus & (1<<TWI_WAIT_BIT))
       {
          if ((TWI_PIN & (1<<SCLPIN))&&(!(TWI_PIN & (1<<SDAPIN))))// Startbedingung vom Master: SCL HI und SDA LO
          {
-            lcd_gotoxy(16,0);
-            lcd_puts(" TWI");
+            if (!(SlaveStatus & (1<<TWI_OK_BIT)))
+            {
+              // lcd_gotoxy(16,0);
+              // lcd_puts(" TWI");
+            }
+
+            if (!(spislavestatus & (1<<RX_BIT)))
+            {
+              // lcd_gotoxy(10,1);
+              // lcd_putc('x');
+            }
             twicount+=10;
  //           init_twi_slave (SLAVE_ADRESSE);
             sei();
             SlaveStatus &= ~(1<<TWI_WAIT_BIT);
             SlaveStatus |= (1<<TWI_OK_BIT); // TWI ist ON
+            spislavestatus |= (1<<RX_BIT);
             
-            // StartDelayBit zuruecksetzen
+            
          }
       }
      
     
-      /**	Ende Startroutinen	***********************/
+      /* *** Ende Startroutinen	********************** */
       
-      /***** rx_buffer abfragen **************** */
-      //rxdata=0;
+      /* **** rx_buffer abfragen **************** */
       
       //***************
       //	Test
       if (TEST && (SlaveStatus &(1<<TWI_WAIT_BIT)))
       {
- 
          SlaveStatus &= ~(1<<TWI_WAIT_BIT); // simulation TWI
          SlaveStatus |= (1<<TWI_OK_BIT);
-
          //rxdata=1;
       }
       
-
       //SlaveStatus |= (1<<TWI_OK_BIT);
       
       // end test
       //***************
       
-      
-      
-      if ((SlaveStatus & (1<<TWI_OK_BIT)) &&(rxdata) && !(SlaveStatus & (1<<MANUELLBIT)))	//Daten von TWI liegen vor und Manuell ist OFF
+      if ((SlaveStatus & (1<<TWI_OK_BIT)) &&(rxdata) && !(SlaveStatus & (1<<MANUELL_BIT)))	//Daten von TWI liegen vor und Manuell ist OFF
       {
+         if (!(spislavestatus & (1<<SPI_OK_BIT)))
+         {
+            //lcd_gotoxy(11,1);
+            //lcd_putc('i');
+
+            FIRSTRUN_PORT |= (1<<FIRSTRUN_PIN);
+            Init_SPI_Master();
+            spislavestatus |= (1<<SPI_OK_BIT);
+            spislavestatus |= (1<<RX_BIT);
+         }
+       //   
          twicount++;
         // lcd_gotoxy(0,1);
        //  lcd_putint(rxdata);
@@ -770,7 +792,6 @@ void main (void)
             delay_ms(30);
             SLAVE_OUT_PORT &= ~(1<<LAMPEEIN);
             lcd_putc('1');
-            
             //lcd_gotoxy(15,1);
             //lcd_puts("ON \0");
          }
@@ -787,10 +808,8 @@ void main (void)
             delay_ms(30);
             SLAVE_OUT_PORT &= ~(1<<LAMPEAUS);
             lcd_putc('0');
-            
             //lcd_gotoxy(15,1);
             //lcd_puts("OFF\0");
-            
          }
          
          // Ofen
@@ -827,7 +846,6 @@ void main (void)
             //lcd_gotoxy(15,1);
             lcd_gotoxy(10,0);
             lcd_putc('R');
-
             lcd_putc('1');
          }
          else
@@ -843,7 +861,6 @@ void main (void)
             //lcd_gotoxy(15,1);
             lcd_gotoxy(10,0);
             lcd_putc('R');
-
             lcd_putc('0');
          }
          
@@ -884,14 +901,14 @@ void main (void)
          //
          if (ALARM_IN_PIN & (1<<TIEFKUEHLALARM_PIN)) // HI, Alles OK
          {
-             SlaveStatus &= ~(1<<ALARMBIT);
+             SlaveStatus &= ~(1<<ALARM_BIT);
             txbuffer[STATUS] &= ~(1<<TIEFKUEHLALARM_PIN); // TIEFKUEHLALARM_PIN zuruecksetzen Bit 3
             lcd_gotoxy(17,1);
             lcd_putc('-');
          }
          else
          {
-             SlaveStatus |= (1<<ALARMBIT);
+             SlaveStatus |= (1<<ALARM_BIT);
             txbuffer[STATUS] |= (1<<TIEFKUEHLALARM_PIN);	// TIEFKUEHLALARM_PIN setzen
             lcd_gotoxy(17,1);
             lcd_putc('t');
@@ -962,11 +979,17 @@ void main (void)
          
 #pragma mark SPI_shift_out
          //****************************
-         
-         SPI_shift_out(); // delayfaktor 2: 80ms aktueller delayfaktor 16: 150ms
+         if ((spislavestatus & (1<<FIRSTRUN_BIT)) && (spislavestatus & (1<<RX_BIT))) // firstrundelay abgelaufen
+         {
+            //lcd_gotoxy(12,1);
+            //lcd_putc('o');
+
+            SPI_shift_out(); // delayfaktor 2: 80ms aktueller delayfaktor 16: 150ms
+         }
+             
          //****************************
          //OSZIHI;
-         //    if (TEST)
+         //if (TEST)
          {
             lcd_gotoxy(0,3);
             lcd_puts("iS \0");
