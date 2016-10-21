@@ -157,6 +157,7 @@
 
 #define ALARM_BIT          6	// Bit 6 von Status
 #define MANUELL_BIT        7	// Bit 7 von Status
+#define MANUELL_PIN        7 // Pin fuer Manuell-Taste: Wird auch von Buzzer benutzt
 
 
 
