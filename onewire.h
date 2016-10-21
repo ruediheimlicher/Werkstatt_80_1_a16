@@ -24,6 +24,7 @@ extern "C" {
    
    // Atmega644
 #define OW_PIN  PORTA4
+   
 #define OW_IN   PINA
 #define OW_OUT  PORTA
 #define OW_DDR  DDRA

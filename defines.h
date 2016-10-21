@@ -53,7 +53,7 @@
 #define OSZIDDR      DDRC
 #define OSZIPIN      PINC
 #define PULSA			2
-#define PULSB			3
+//#define PULSB			3
 
 #define OSZILO OSZIPORT &= ~(1<<PULSA)
 #define OSZIHI OSZIPORT |= (1<<PULSA)

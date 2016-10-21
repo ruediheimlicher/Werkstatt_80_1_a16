@@ -222,11 +222,12 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 
 void slaveinit(void)
 {
-   /*
+   
     SLAVE_OUT_DDR |= (1<<LAMPEEIN);		//Pin 0 von PORT D als Ausgang fuer Schalter: ON
     SLAVE_OUT_DDR |= (1<<LAMPEAUS);		//Pin 1 von PORT D als Ausgang fuer Schalter: OFF
     SLAVE_OUT_DDR |= (1<<OFENEIN);		//Pin 2 von PORT D als Ausgang fuer OFENEIN
     SLAVE_OUT_DDR |= (1<<OFENAUS);		//Pin 3 von PORT D als Ausgang fuer OFENAUS
+   /*
     SERVODDR |= (1<<SERVOPIN1);	//Pin 6 von PORT D als Ausgang fuer Servo-Enable
     SERVODDR |= (1<<SERVOPIN0);	//Pin 7 von PORT D als Ausgang fuer Servo-Impuls
     */
@@ -274,7 +275,7 @@ void slaveinit(void)
    TWI_DDR &= ~(1<<SCLPIN);//Bit 5 von PORT C als Eingang fŸr SCL
    TWI_PORT |= (1<<SCLPIN); // HI
    
-   BUZZER_DDR |= (1<<BUZZER_PIN);
+   
    
    //Ausgang fuer Firstrun
    FIRSTRUN_DDR |= (1<<FIRSTRUN_PIN);
@@ -403,10 +404,12 @@ ISR(TIMER2_COMP_vect)
       alarmcounter++;
       if ((alarmcounter > 0x0FFF) &&  (alarmcounter < 0x1FFF))// Ton ON
       {
+         BUZZER_DDR |= (1<<BUZZER_PIN); // Buzzer nur als Ausgang bei Bedarf
          BUZZER_PORT ^= (1<<BUZZER_PIN);
       }
       if (alarmcounter > 0x4FFF)
       {
+         BUZZER_DDR &= ~(1<<BUZZER_PIN);
          alarmcounter=0;
       }
       
@@ -521,20 +524,7 @@ void main (void)
    lcd_cls();
    lcd_puts(RAUM);
    
-   /*
-    SLAVE_OUT_PORT &= ~(1<<LAMPEEIN);//	LAMPEEIN sicher low
-    SLAVE_OUT_PORT &= ~(1<<LAMPEAUS);//	LAMPEAus sicher low
-    SLAVE_OUT_PORT |= (1<<LAMPEAUS);
-    delay_ms(30);
-    SLAVE_OUT_PORT &= ~(1<<LAMPEAUS);
-    
-    SLAVE_OUT_PORT &= ~(1<<OFENEIN);//	OFENEIN sicher low
-    SLAVE_OUT_PORT &= ~(1<<OFENAUS);//	OFENAUS sicher low
-    SLAVE_OUT_PORT |= (1<<OFENAUS);
-    delay_ms(30);
-    SLAVE_OUT_PORT &= ~(1<<OFENAUS);
-   */
-   //uint8_t Servowert=0;
+    //uint8_t Servowert=0;
    //uint8_t Servorichtung=1;
    
    uint16_t TastenStatus=0;
@@ -757,6 +747,7 @@ void main (void)
             FIRSTRUN_PORT |= (1<<FIRSTRUN_PIN);
             Init_SPI_Master();
             spislavestatus |= (1<<SPI_OK_BIT);
+            
             spislavestatus |= (1<<RX_BIT);
          }
        //   
@@ -908,7 +899,7 @@ void main (void)
          }
          else
          {
-             SlaveStatus |= (1<<ALARM_BIT);
+            SlaveStatus |= (1<<ALARM_BIT);
             txbuffer[STATUS] |= (1<<TIEFKUEHLALARM_PIN);	// TIEFKUEHLALARM_PIN setzen
             lcd_gotoxy(17,1);
             lcd_putc('t');
