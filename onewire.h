@@ -22,7 +22,7 @@ extern "C" {
 */
    
    
-   // Atmega644
+// Atmega644
 #define OW_PIN  PORTA4
    
 #define OW_IN   PINA

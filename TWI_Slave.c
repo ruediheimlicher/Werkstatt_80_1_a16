@@ -417,6 +417,7 @@ ISR(TIMER2_COMP_vect)
    }
 }
 
+
 uint8_t search_sensors(void)
 {
    uint8_t i;
@@ -565,8 +566,10 @@ void main (void)
       gTempdata[i]=0;
       i++;
    }
+// DS1820 init-stuff end
 
    
+   // erst nach firstrun
 //  Init_SPI_Master();
    
    /*
@@ -648,6 +651,17 @@ void main (void)
       wdt_reset();
       //Blinkanzeige
       loopcount0++;
+      if (((loopcount0 & 0xFF)==0) && (SlaveStatus & (1<<MANUELL_BIT)))
+      {
+         
+         //OSZILO;
+         //uint16_t tastaturadc=(readKanal(TASTATURPIN));
+         Tastenwert = ((readKanal_raw(TASTATURPIN))>>2);
+         //Tastenwert++;
+         //OSZIHI;
+         
+      }
+
       if (loopcount0==0xAFFF)
       {
          //  OSZITOGG;
@@ -857,6 +871,7 @@ void main (void)
          
 #pragma mark Sensors
          // Temperatur messen mit DS18S20
+         /*
          if (gNsensors) // Sensor eingeseteckt
          {
             start_temp_meas();
@@ -864,6 +879,7 @@ void main (void)
             read_temp_meas();
             uint8_t line=0;
             //Sensor 1
+            
             lcd_gotoxy(0,line);
             lcd_puts("T:     \0");
             if (gTempdata[0]/10>=100)
@@ -879,13 +895,17 @@ void main (void)
             
             lcd_putc('.');
             lcd_putint1(gTempdata[0]%10);
+            
          }
+          
          txbuffer[INNEN]=2*((gTempdata[0]/10)& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
          // Halbgrad addieren
          if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
          {
             txbuffer[INNEN] +=1;
          }
+          
+          */
 #pragma mark Kuehltruhe/Wasser
          //
          //	Kuehltruhe abfragen
