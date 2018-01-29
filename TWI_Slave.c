@@ -40,7 +40,7 @@ volatile uint8_t rxbuffer[buffer_size];
 
 /*Der Sendebuffer, der vom Master ausgelesen werden kann.*/
 volatile uint8_t txbuffer[buffer_size];
-
+volatile uint8_t twi=0;
 static volatile uint8_t SlaveStatus=0x00; //status
 
 volatile uint8_t spislavestatus=0x00; //status
