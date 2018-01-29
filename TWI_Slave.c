@@ -67,7 +67,7 @@ volatile uint16_t          Servostellung=0;					//	Abstand der Impulspakete
 volatile uint8_t           TWI_Pause=1;
 //volatile uint8_t        ServoimpulsOK=0;				//	Zaehler fuer richtige Impulsdauer
 //uint8_t                 ServoimpulsNullpunkt=23;
-uint8_t                 ServoimpulsSchrittweite=10;
+uint8_t                    ServoimpulsSchrittweite=10;
 uint16_t                 Servoposition[]={1000,1250,1500,1750,2000,1750,1500,1250};
 
 volatile uint16_t       ADCImpuls=0;
@@ -92,7 +92,7 @@ uint8_t                 EEMEM WDT_ErrCount;	// Akkumulierte WDT Restart Events
 //#define CS_HC_PASSIVE			SPI_CONTROL_PORT |= (1<< SPI_CONTROL_CS_HC)	// CS fuer HC ist HI
 //#define CS_HC_ACTIVE				SPI_CONTROL_PORT &= ~(1<< SPI_CONTROL_CS_HC)	// CS fuer HC ist LO
 
-#define out_PULSE_DELAY			200								// Pause bei shift_byte
+//#define out_PULSE_DELAY			500								// us, Pause bei shift_byte
 
 volatile uint16_t EventCounter=0;
 
@@ -115,13 +115,13 @@ void SPI_shift_out(void)
    uint8_t byteindex=0;
    in_startdaten=0;
    in_enddaten=0;
-   uint8_t delayfaktor=2;
+   uint8_t delayfaktor=3;
    
    in_lbdaten=0;
    in_hbdaten=0;
    lcd_gotoxy(19,1);
    lcd_putc(' ');
-   //OSZILO;
+   OSZILO;
    
    SPI_CLK_HI; // Clk sicher HI
    delay_ms(1);
@@ -165,12 +165,12 @@ void SPI_shift_out(void)
    lcd_putc('*');
    lcd_putint(in_enddaten);
    */
-   lcd_gotoxy(19,1);
-   
+   lcd_gotoxy(18,1);
+   lcd_putc('S');
    if (out_startdaten + in_enddaten==0xFF)
    {
       lcd_putc('+');
-      
+      SPI_OKCounter++;
    }
    else
    {
@@ -182,7 +182,7 @@ void SPI_shift_out(void)
    
    //	lcd_gotoxy(17,3);
    //	lcd_puthex(errCounter & 0x00FF);
-   //OSZIHI;
+   OSZIHI;
    
 }
 
@@ -450,7 +450,7 @@ uint8_t search_sensors(void)
          lcd_puts("Bus Error\0" );
          break;
       }
-      lcd_gotoxy(4,1);
+      //lcd_gotoxy(4,1);
       
       for ( i=0; i < OW_ROMCODE_SIZE; i++ )
       {
@@ -665,9 +665,7 @@ void main (void)
       if (loopcount0==0xAFFF)
       {
          //  OSZITOGG;
-         //  lcd_gotoxy(12,1);
-         //  lcd_putint(loopcount1);
-
+ 
          loopcount0=0;
          LOOPLEDPORT ^=(1<<LOOPLED);
          
@@ -676,6 +674,9 @@ void main (void)
          {
             loopcount1=0;
             Servostellung++;
+            lcd_gotoxy(0,0);
+            lcd_putint(adccounter);
+
             OCR1A = Servoposition[Servostellung %8];
             if (TEST || (!(TESTPIN & (1<<TEST_PIN))))
             {
@@ -727,11 +728,8 @@ void main (void)
             SlaveStatus &= ~(1<<TWI_WAIT_BIT);
             SlaveStatus |= (1<<TWI_OK_BIT); // TWI ist ON
             spislavestatus |= (1<<RX_BIT);
-            
-            
          }
       }
-     
     
       /* *** Ende Startroutinen	********************** */
       
@@ -743,7 +741,6 @@ void main (void)
       {
          SlaveStatus &= ~(1<<TWI_WAIT_BIT); // simulation TWI
          SlaveStatus |= (1<<TWI_OK_BIT);
-         //rxdata=1;
       }
       
       //SlaveStatus |= (1<<TWI_OK_BIT);
@@ -753,28 +750,28 @@ void main (void)
       
       if ((SlaveStatus & (1<<TWI_OK_BIT)) &&(rxdata) && !(SlaveStatus & (1<<MANUELL_BIT)))	//Daten von TWI liegen vor und Manuell ist OFF
       {
-         if (!(spislavestatus & (1<<SPI_OK_BIT)))
+         if (!(spislavestatus & (1<<SPI_OK_BIT))) // first run, SPI noch nicht aktiviert
          {
             //lcd_gotoxy(11,1);
             //lcd_putc('i');
-
+            
             FIRSTRUN_PORT |= (1<<FIRSTRUN_PIN);
             Init_SPI_Master();
             spislavestatus |= (1<<SPI_OK_BIT);
             
             spislavestatus |= (1<<RX_BIT);
          }
-       //   
+         //
          twicount++;
-        // lcd_gotoxy(0,1);
-       //  lcd_putint(rxdata);
+         // lcd_gotoxy(0,1);
+         //  lcd_putint(rxdata);
          
          lcd_gotoxy(0,1);
-         lcd_putint(spannungA>>2);
+         //lcd_putint(spannungA>>2);
+         lcd_putint(twicount & 0xFF);
+        // lcd_putc(' ');
+        // lcd_putint12(spannungB);
          
-         lcd_putc(' ');
-         lcd_putint12(spannungB);
-
          if (TEST || (!(TESTPIN & (1<<TEST_PIN))))
          {
             SlaveStatus &= ~(1<<TWI_OK_BIT); // simulation TWI
@@ -798,6 +795,8 @@ void main (void)
             SLAVE_OUT_PORT &= ~(1<<LAMPEEIN);
             lcd_putc('1');
             //lcd_gotoxy(15,1);
+            //lcd_putc('L');
+            //lcd_putc('1');
             //lcd_puts("ON \0");
          }
          else
@@ -872,38 +871,38 @@ void main (void)
 #pragma mark Sensors
          // Temperatur messen mit DS18S20
          /*
-         if (gNsensors) // Sensor eingeseteckt
-         {
-            start_temp_meas();
-            delay_ms(800);
-            read_temp_meas();
-            uint8_t line=0;
-            //Sensor 1
-            
-            lcd_gotoxy(0,line);
-            lcd_puts("T:     \0");
-            if (gTempdata[0]/10>=100)
-            {
-               lcd_gotoxy(3,line);
-               lcd_putint((gTempdata[0]/10));
-            }
-            else
-            {
-               lcd_gotoxy(2,line);
-               lcd_putint2((gTempdata[0]/10));
-            }
-            
-            lcd_putc('.');
-            lcd_putint1(gTempdata[0]%10);
-            
-         }
+          if (gNsensors) // Sensor eingeseteckt
+          {
+          start_temp_meas();
+          delay_ms(800);
+          read_temp_meas();
+          uint8_t line=0;
+          //Sensor 1
           
-         txbuffer[INNEN]=2*((gTempdata[0]/10)& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
-         // Halbgrad addieren
-         if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
-         {
-            txbuffer[INNEN] +=1;
-         }
+          lcd_gotoxy(0,line);
+          lcd_puts("T:     \0");
+          if (gTempdata[0]/10>=100)
+          {
+          lcd_gotoxy(3,line);
+          lcd_putint((gTempdata[0]/10));
+          }
+          else
+          {
+          lcd_gotoxy(2,line);
+          lcd_putint2((gTempdata[0]/10));
+          }
+          
+          lcd_putc('.');
+          lcd_putint1(gTempdata[0]%10);
+          
+          }
+          
+          txbuffer[INNEN]=2*((gTempdata[0]/10)& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+          // Halbgrad addieren
+          if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
+          {
+          txbuffer[INNEN] +=1;
+          }
           
           */
 #pragma mark Kuehltruhe/Wasser
@@ -912,17 +911,19 @@ void main (void)
          //
          if (ALARM_IN_PIN & (1<<TIEFKUEHLALARM_PIN)) // HI, Alles OK
          {
-             SlaveStatus &= ~(1<<ALARM_BIT);
+            SlaveStatus &= ~(1<<ALARM_BIT);
             txbuffer[STATUS] &= ~(1<<TIEFKUEHLALARM_PIN); // TIEFKUEHLALARM_PIN zuruecksetzen Bit 3
-            lcd_gotoxy(17,1);
+            lcd_gotoxy(10,1);
+            lcd_putc('A');
             lcd_putc('-');
          }
          else
          {
             SlaveStatus |= (1<<ALARM_BIT);
             txbuffer[STATUS] |= (1<<TIEFKUEHLALARM_PIN);	// TIEFKUEHLALARM_PIN setzen
-            lcd_gotoxy(17,1);
-            lcd_putc('t');
+            lcd_gotoxy(10,1);
+            lcd_putc('A');
+            lcd_putc('T');
          }
          
          //
@@ -931,23 +932,23 @@ void main (void)
          if (ALARM_IN_PIN & (1<<WASSERALARM_PIN)) // HI, Alles OK
          {
             txbuffer[STATUS] &= ~(1<<WASSERALARM_PIN); // WASSERALARM_PIN zuruecksetzen
-            lcd_gotoxy(18,1);
+            lcd_gotoxy(12,1);
             lcd_putc('-');
             
          }
          else
          {
             txbuffer[STATUS] |= (1<<WASSERALARM_PIN);	// WASSERALARM_PIN setzen
-            lcd_gotoxy(18,1);
-            lcd_putc('w');
+            lcd_gotoxy(12,1);
+            lcd_putc('W');
             
          }
-
+         
          
          
          
          // ++++++++++++++++++++++++++
-
+         
          
          rxdata=0;               // TWI erledigt
          
@@ -994,10 +995,10 @@ void main (void)
          {
             //lcd_gotoxy(12,1);
             //lcd_putc('o');
-
+            
             SPI_shift_out(); // delayfaktor 2: 80ms aktueller delayfaktor 16: 150ms
          }
-             
+         
          //****************************
          //OSZIHI;
          //if (TEST)
@@ -1010,23 +1011,32 @@ void main (void)
             lcd_putc('*');
             lcd_putint(inbuffer[2]);
             lcd_putc('*');
-            lcd_putint(in_startdaten);
-            
+            lcd_putint(in_startdaten);            
          }
-         
-         lcd_gotoxy(13,0);
+ 
+         lcd_gotoxy(4,1);
+         lcd_putc('C');
+         lcd_putint(SPI_OKCounter);
+
+         lcd_gotoxy(14,1);
+         lcd_putc('E');
          lcd_putint(SPI_ErrCounter);
          
          lcd_gotoxy(12,2);
-         lcd_putint16(inbuffer[0]+0xFF*inbuffer[1]);
+         lcd_putint16(inbuffer[0] | (inbuffer[1] << 8));
+         
          
          txbuffer[STROML]= inbuffer[0]; // L: byte 4
          txbuffer[STROMH] = inbuffer[1]; // H: byte 5
          txbuffer[STROMHH] = inbuffer[2]; // HH: byte 6
+//         txbuffer[STROML] = (4*twicount+0x18F) & 0x00FF;
+//         txbuffer[STROMH] = ((4*twicount+0x18F) & 0xFF00)>>8;
+//         txbuffer[STROMHH] = 0;
+        
          
          /***** End SPI**************** */
-
-          //****************************
+         
+         //****************************
       }
       
       

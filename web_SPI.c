@@ -30,7 +30,7 @@
  
  #define SPI_CONTROL_MOSI		PORTD0					// Ausgang fuer Daten zum Slave
  #define SPI_CONTROL_MISO		PORTD1					// Eingang fuer Daten vom Slave
- #define SPI_CONTROL_SCK			PORTD2					// Ausgang fuer CLK
+ #define SPI_CONTROL_SCK		PORTD2					// Ausgang fuer CLK
  #define SPI_CONTROL_CS_HC		PORTD3					// Ausgang CS fuer Slave
  */
 
@@ -76,11 +76,11 @@ volatile uint16_t								errCounter=0;
 static volatile uint8_t						ONCounter=0x00;
 static volatile uint8_t						OFFCounter=0x00;
 static volatile uint8_t						OutCounter=0x00;
-static volatile uint8_t						SendOKCounter=0x00;
+static volatile uint8_t						SPI_OKCounter=0x00;
 static volatile uint8_t						SendErrCounter=0x00;
 static volatile uint8_t						IncompleteCounter=0x00;
 //static volatile uint16_t					TimeoutCounter=0x00;
-static volatile uint8_t					SPI_ErrCounter=0x00;
+static volatile uint8_t					   SPI_ErrCounter=0x00;
 //static volatile uint16_t					resetcounter=0x00; // counter fuer Dauer reset-meldeimPULSA vom Master
 // ************************************************
 // defines fuer spistatus
@@ -102,7 +102,7 @@ static volatile uint8_t					SPI_ErrCounter=0x00;
 #define CS_HC_PASSIVE			SPI_CONTROL_PORT |= (1<< SPI_CONTROL_CS_HC)	// CS fuer HC ist HI
 #define CS_HC_ACTIVE				SPI_CONTROL_PORT &= ~(1<< SPI_CONTROL_CS_HC)	// CS fuer HC ist LO
 
-#define out_PULSE_DELAY			200								// Pause bei shift_byte
+#define out_PULSE_DELAY			250								// Pause bei shift_byte
 
 #define SPI_BUFSIZE				8							// Anzahl Bytes
 

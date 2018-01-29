@@ -1,0 +1,11 @@
+cd /Users/ruediheimlicher/Documents/Elektronik/\ AVR/\ AVR_Programme/AVR\ HomeCentral/Slave/TWI_Slave_git/TWI_Slave_64\ Werkstatt_80_1_a16
+avr-size -C --mcu=atmega644p TWI_Slave.elf
+
+Program:    6504 bytes (39.7% Full)
+(.text + .data + .bootloader)
+
+Data:        271 bytes (26.5% Full)
+(.data + .bss + .noinit)
+
+EEPROM:        3 bytes (0.6% Full)
+(.eeprom)
