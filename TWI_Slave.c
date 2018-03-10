@@ -750,6 +750,7 @@ void main (void)
       
       if ((SlaveStatus & (1<<TWI_OK_BIT)) &&(rxdata) && !(SlaveStatus & (1<<MANUELL_BIT)))	//Daten von TWI liegen vor und Manuell ist OFF
       {
+         
          if (!(spislavestatus & (1<<SPI_OK_BIT))) // first run, SPI noch nicht aktiviert
          {
             //lcd_gotoxy(11,1);
@@ -950,7 +951,7 @@ void main (void)
          // ++++++++++++++++++++++++++
          
          
-         rxdata=0;               // TWI erledigt
+        
          
 #pragma mark SPI
          /***** SPI: Daten von SPI_Slave_Strom abfragen **************** */
@@ -993,12 +994,17 @@ void main (void)
          //****************************
          if ((spislavestatus & (1<<FIRSTRUN_BIT)) && (spislavestatus & (1<<RX_BIT))) // firstrundelay abgelaufen
          {
-            //lcd_gotoxy(12,1);
+            lcd_gotoxy(16,0);
+            lcd_puthex(rxdata);
             //lcd_putc('o');
-            
+            if (rxdata )
+            {
             SPI_shift_out(); // delayfaktor 2: 80ms aktueller delayfaktor 16: 150ms
+              rxdata=0;               // TWI erledigt
+            }
          }
          
+          rxdata=0;               // TWI erledigt
          //****************************
          //OSZIHI;
          //if (TEST)
