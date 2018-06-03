@@ -512,6 +512,12 @@ volatile uint8_t testwert=19;
 void main (void)
 {
    slaveinit();
+   wdt_reset();
+   WDTCR |= (1<<WDTOE) | (1<<WDE);
+   WDTCR = 0x00;
+   //MCRSR&=~(1<<WDRF);
+   wdt_disable();
+
    //PORT2 |=(1<<PC4);
    //PORTC |=(1<<PC5);
    //init_twi_slave (SLAVE_ADRESSE);
@@ -999,7 +1005,7 @@ void main (void)
             //lcd_putc('o');
             if (rxdata )
             {
-            SPI_shift_out(); // delayfaktor 2: 80ms aktueller delayfaktor 16: 150ms
+ //           SPI_shift_out(); // delayfaktor 2: 80ms aktueller delayfaktor 16: 150ms
               rxdata=0;               // TWI erledigt
             }
          }
