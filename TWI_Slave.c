@@ -1037,10 +1037,15 @@ void main (void)
          lcd_gotoxy(12,2);
          lcd_putint16(inbuffer[0] | (inbuffer[1] << 8));
          
-         
-         txbuffer[STROML]= inbuffer[0]; // L: byte 4
+         /*
+          #define STROMHH      4 // Bytes fuer Stromdaten
+          #define STROMH       5
+          #define STROML       6
+
+          */
+         txbuffer[STROML]= inbuffer[0]; // L: byte 6
          txbuffer[STROMH] = inbuffer[1]; // H: byte 5
-         txbuffer[STROMHH] = inbuffer[2]; // HH: byte 6
+         txbuffer[STROMHH] = inbuffer[2]; // HH: byte 4
 //         txbuffer[STROML] = (4*twicount+0x18F) & 0x00FF;
 //         txbuffer[STROMH] = ((4*twicount+0x18F) & 0xFF00)>>8;
 //         txbuffer[STROMHH] = 0;

@@ -118,7 +118,7 @@ uint16_t readKanal_raw(uint8_t derKanal) //Unsere Funktion zum ADC-Channel aus l
    ADMUX |= (1<<REFS1) | (1<<REFS0); // interne Referenzspannung nutzen
    ADCSRA = (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1);    // Frequenzvorteiler auf 32 setzen und ADC aktivieren
    
-   // Eigentliche Messung - Mittelwert aus 4 aufeinanderfolgenden Wandlungen
+   // Eigentliche Messung - Mittelwert aus 2 aufeinanderfolgenden Wandlungen
    for(i=0;i<2;i++)
    {
       ADCSRA |= (1<<ADSC);            // eine Wandlung
@@ -129,7 +129,7 @@ uint16_t readKanal_raw(uint8_t derKanal) //Unsere Funktion zum ADC-Channel aus l
    }
    //  ADCSRA &= ~(1<<ADEN);             // ADC deaktivieren ("Enable-Bit" auf LOW setzen)
    
-   result /= 2;                     // Summe durch vier teilen = arithm. Mittelwert
+   result /= 2;                     // Summe durch 2 teilen = arithm. Mittelwert
    return result;
    return (result * ADC_KORR);
 }
